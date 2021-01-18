@@ -293,7 +293,7 @@ bool Execute_Command(String Command)
         else {
             alert= "Stressed ph level";
         }
-        String msg = "ph: " + String(ph) + alert;
+        String msg = "ph: " + String(ph) + "\n" + alert;
         Serial.println(msg);
         Send_Message(msg, Message.number);
         return true;
