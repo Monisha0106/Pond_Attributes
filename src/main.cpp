@@ -16,7 +16,7 @@ int turb_v;
 String turb;
 String alert;
 //float arr[20][3];
-double arr[42][31]=  {{89.0,15.5,16.0,16.5,17.0,17.5,18.0,18.5,19.0,19.5,20.0,20.5,21.0,21.5,22.0,22.5,23.0,23.5,24.3,24.5,25.0,25.5,26.0,26.5,27.0,27.5,28.0,23.5,29.0,29.5,30.0},
+float arr[42][31]=  {{89.0,15.5,16.0,16.5,17.0,17.5,18.0,18.5,19.0,19.5,20.0,20.5,21.0,21.5,22.0,22.5,23.0,23.5,24.3,24.5,25.0,25.5,26.0,26.5,27.0,27.5,28.0,23.5,29.0,29.5,30.0},
                {6.0,0.0284,0.0295,0.0306,0.0318,.032,0.0343,0.0356,0.0369,0.0383,0.0397,0.0412,0.0427,0.0443,0.0459,0.0476,0.0493,0.051,0.0530,0.0549,0.0569,0.0589,0.0610,0.0632,0.0654,0.0678,0.0701,0.0726,0.0752,0.0778,0.0805},
                {6.1,0.0358,0.0372,0.0386,0.0401,0.0416,.043l,0.0448,0.0465,0.0482,0.0500,0.0518,0.0538,0.0557,0.0578,0.0599,0.0621,0.0644,0.0667,0.0691,0.0716,0.0742,0.0768,0.0796,0.0824,0.0853,0.0883,0.0914,0.0946,0.0979,0.101},
                {6.2,0.0451,0.0468,0.0486,0.0504,0.0523,0.0543,0.0564,0.0585,0.0607,0.0629,0.0653,0.0677,0.0702,0.0727,0.0754,0.0782,0.0810,0.0839,0.0870,0.0901,0.0933,0.0967,0.100,0.104,0.107,0.111,0.115,0.119,0.123,0.129},
@@ -63,9 +63,6 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire);
 
-float PH_calibration_value = 25.05;
-int phval = 0; 
-int buffer_arr[100],temp;
 void print_temperature()
 {
     sensors.requestTemperatures(); // Send the command to get temperature readings 
@@ -76,7 +73,11 @@ void print_temperature()
 }
 
 void print_PH_Level()
-{
+{   
+    float PH_calibration_value = 25.05;
+    int phval = 0; 
+    int buffer_arr[100],temp;
+
     for(int i=0;i<100;i++)  
         buffer_arr[i]=analogRead(A1);
     
@@ -104,23 +105,31 @@ void print_PH_Level()
 
 float temp_rounder(float v)
 {
-    if(v-floor(v)<0.35)
-        return floor(v);
-    else if((v-floor(v))>0.35 || (v-floor(v))<0.75)
-        return (floor(v)+0.5);
-    else if(v-floor(v)>0.75)
-        return (round(v));
+    if(v-floorf(v)<0.35)
+        return floorf(v);
+    else if((v-floorf(v))>0.35 || (v-floorf(v))<0.75)
+        return (floorf(v)+0.5);
+    else if(v-floorf(v)>0.75)
+        return (roundf(v));
     else 
         return round(v);
+}
+
+float ph_rounder(float v)
+{
+    float rv = roundf(v);
+    float pnt=(roundf((v-rv)*10.0))/10.0;
+    rv=rv+pnt;
+
 }
 void print_Ammonia_Level()
 {
     //print_temperature();
     //print_PH_Level();
-    temp = 17.73;
+    tmp = 17.63;
     ph = 6.35;
-    double temper = temp_rounder(temp);
-    double p_h = roundf(ph);
+    float temper = temp_rounder(tmp);
+    float p_h = ph_rounder(ph);
     Serial.println(temper);
     Serial.println(p_h);
     int ph_index=0;
@@ -139,14 +148,16 @@ void print_Ammonia_Level()
     {
         if(arr[0][i] == temper)
             {
+                Serial.println(arr[0][i]);
                 temp_index = i;
                // break;
             }
+        
     }
     Serial.println(ph_index);
     Serial.println(temp_index);
     //float ammonia = arr[ph_index][temp_index];
-    double ammonia = arr[ph_index][temp_index];
+    float ammonia = arr[ph_index][temp_index];
     Serial.print("Ammonia level is: ");
     Serial.println(ammonia);
 }
@@ -190,31 +201,7 @@ void print_Turbidity_Level()
 }
 
 
-void setup(void) 
-{ 
- // start serial port 
-    Serial.begin(9600); 
-    SIM800L.begin(9600);
-// Serial.println("Dallas Temperature IC Control Library Demo"); 
- // Start up the library 
-    sensors.begin(); 
-    Serial.println("Initializing...");
-    delay(1000);
-    SIM800L.println("AT+CNMI=1,2,0,0,0"); 
-    delay(1000);
-//   pinMode(Hall_Effect_Sensor_pin, INPUT_PULLUP);
-//     // pinMode(Reed_Switch_pin, INPUT_PULLUP);
-//   attachInterrupt(Hall_Effect_Sensor_pin, pulse_counter, FALLING);
-//   // bool check = Execute_Command("meter:1233141");
-//   // Serial.println(check);
-//   // check = Execute_Command("flow:100");
-//   // Serial.println(check);
-//   EEPROM.get(meter_reading_save_address, current_water_meter_reading);
-//   EEPROM.get(flow_per_pulse_save_address, flow_per_pulse);
 
-//   Serial.println(current_water_meter_reading);
-//   Serial.println(flow_per_pulse);
-} 
 typedef struct SString
 {
     String number;
@@ -434,6 +421,34 @@ bool Execute_Command(String Command)
     }
 }
 //String red_alert;
+
+
+void setup(void) 
+{ 
+ // start serial port 
+    Serial.begin(9600); 
+//    SIM800L.begin(9600);
+// Serial.println("Dallas Temperature IC Control Library Demo"); 
+ // Start up the library 
+    sensors.begin(); 
+    Serial.println("Initializing...");
+    delay(1000);
+//    SIM800L.println("AT+CNMI=1,2,0,0,0"); 
+    delay(1000);
+//   pinMode(Hall_Effect_Sensor_pin, INPUT_PULLUP);
+//     // pinMode(Reed_Switch_pin, INPUT_PULLUP);
+//   attachInterrupt(Hall_Effect_Sensor_pin, pulse_counter, FALLING);
+//   // bool check = Execute_Command("meter:1233141");
+//   // Serial.println(check);
+//   // check = Execute_Command("flow:100");
+//   // Serial.println(check);
+//   EEPROM.get(meter_reading_save_address, current_water_meter_reading);
+//   EEPROM.get(flow_per_pulse_save_address, flow_per_pulse);
+
+//   Serial.println(current_water_meter_reading);
+//   Serial.println(flow_per_pulse);
+} 
+
 void loop(void)
 {   
     print_Ammonia_Level();
